@@ -50,7 +50,7 @@ bash bootstrap.sh --install-only
    gh auth login --hostname github.com --with-token
    ```
 
-   粘贴 token，回车
+   粘贴 token 后按 `Ctrl+D`（`--with-token` 从 stdin 读取）。不要用 `echo token | ...`，避免 token 进入 shell 历史。
 3. 课程结束后到同一页面撤销该 token
 4. token **只留在本机**；不要贴进 Claude Code 对话、不要写进仓库、不要发给助教
 

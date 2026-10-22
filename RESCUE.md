@@ -18,14 +18,14 @@
 ## 2. 平台选择与取文件
 
 统一从 `api.github.com` 取（公开仓，不需要登录），不要依赖 `github.com` 主站。
-`ref` 先试 `main`，再试 `rescue-1`（发布标签）；两者都 404 才判定为“脚本不可达”。诊断日志保存在 `~/.shjz/doctor-last.log`；doctor 本体只放临时目录，跑完删除。
+`ref` 先试课程发布标签 `rescue-1`，再试 `main`；两者都 404 才判定为“脚本不可达”。诊断日志保存在 `~/.shjz/doctor-last.log`；doctor 本体只放临时目录，跑完删除。
 
 ### macOS / Linux
 
 ```bash
 tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/shjz-doctor.XXXXXX")
 curl -fsSL -H "Accept: application/vnd.github.raw" \
-  "https://api.github.com/repos/shjz-ai-course202610/camp-bootstrap/contents/doctor.sh?ref=main" \
+  "https://api.github.com/repos/shjz-ai-course202610/camp-bootstrap/contents/doctor.sh?ref=rescue-1" \
   -o "$tmpdir/doctor.sh"
 bash "$tmpdir/doctor.sh" --check --project "$PWD"
 rm -rf "$tmpdir"
@@ -51,7 +51,7 @@ if ($gitBash) { $gitBash } else { "NO_GIT_BASH" }
 ```powershell
 $tmpDir = Join-Path $env:TEMP ("shjz-doctor-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Force $tmpDir | Out-Null
-Invoke-RestMethod -Uri "https://api.github.com/repos/shjz-ai-course202610/camp-bootstrap/contents/doctor.ps1?ref=main" `
+Invoke-RestMethod -Uri "https://api.github.com/repos/shjz-ai-course202610/camp-bootstrap/contents/doctor.ps1?ref=rescue-1" `
   -Headers @{ Accept = 'application/vnd.github.raw' } `
   -OutFile (Join-Path $tmpDir "doctor.ps1")
 powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $tmpDir "doctor.ps1") -Check

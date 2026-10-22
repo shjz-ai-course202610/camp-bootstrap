@@ -7,6 +7,7 @@ ORG="shjz-ai-course202610"
 GH_VERSION="2.103.0"
 BIN_DIR="${CAMP_BIN_DIR:-$HOME/.local/bin}"
 CAMP_HOME="${CAMP_HOME:-$HOME/.shjz}"
+PROJECT_DIR="${CAMP_PROJECT_DIR:-$PWD}"
 export CAMP_HOME
 INSTALL_ONLY=0
 REPO_NAME=""
@@ -133,6 +134,15 @@ fetch_camp() {
 }
 
 run_init() {
+  cd "$PROJECT_DIR" || die "无法进入项目目录：$PROJECT_DIR"
+  if [ -f "$PROJECT_DIR/bootstrap.sh" ] && [ -f "$PROJECT_DIR/README.md" ] && \
+     git -C "$PROJECT_DIR" remote get-url origin 2>/dev/null | grep -q 'camp-bootstrap'; then
+    die "请在课程项目文件夹里运行本脚本，不要进入 camp-bootstrap 仓库目录。"
+  fi
+  # 如果引导仓被克隆到项目目录下，避免把它一起上传
+  if [ -d "$PROJECT_DIR/camp-bootstrap" ]; then
+    printf '\n# shjz bootstrap clone\ncamp-bootstrap/\n' >> "$PROJECT_DIR/.gitignore"
+  fi
   if [ -z "$REPO_NAME" ]; then
     printf '请输入私有仓库名（英文/拼音）：'
     read -r REPO_NAME

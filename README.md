@@ -25,6 +25,39 @@ bash bootstrap.sh <仓名>
 bash bootstrap.sh --install-only
 ```
 
+## 网络不稳时的兜底
+
+- **引导脚本本体**：优先用 `api.github.com` 取，不依赖 github.com 主站：
+
+  ```bash
+  curl -fsSL -H "Accept: application/vnd.github.raw" \
+    "https://api.github.com/repos/shjz-ai-course202610/camp-bootstrap/contents/bootstrap.sh?ref=main" \
+    -o bootstrap.sh
+  ```
+
+- **gh 下载**：脚本优先走 `api.github.com/repos/cli/cli/releases/assets/<id>`，失败才回退 github.com。
+- **clone / push**：仍走 github.com；主站不可达时需要代理，或配置 `ssh.github.com:443`。
+  - `api.github.com` 只能解决“取文件/取 release”，不能替代 push。
+
+## 设备码登录失败时（PAT 兜底）
+
+`gh auth login` 的设备码流程依赖 github.com 主站；主站不稳时会失败。备用路径：
+
+1. 浏览器打开 <https://github.com/settings/tokens>，创建 classic token，勾选 `repo`、`read:org`
+2. 终端运行：
+
+   ```bash
+   gh auth login --hostname github.com --with-token
+   ```
+
+   粘贴 token，回车
+3. 课程结束后到同一页面撤销该 token
+4. token **只留在本机**；不要贴进 Claude Code 对话、不要写进仓库、不要发给助教
+
+## 为什么不公开 camp-cli
+
+建仓和推送仍然需要 GitHub 认证；公开 `camp-cli` 省不掉登录，反而暴露测试与文档。只公开这个 `camp-bootstrap` 引导仓。
+
 ## 安全边界
 
 - 不写 token、不接收 token

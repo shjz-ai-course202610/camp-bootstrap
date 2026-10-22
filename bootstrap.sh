@@ -64,13 +64,36 @@ install_gh() {
     *) die "暂不支持的系统：$os" ;;
   esac
 
+  # GitHub release asset ID 与 GH_VERSION 绑定；升版本时两者一起改。
+  api_asset_id=""
+  case "$os/$arch" in
+    Darwin/arm64) api_asset_id=662956481 ;;
+    Darwin/x86_64) api_asset_id=662956458 ;;
+    Linux/x86_64|Linux/amd64) api_asset_id=662956379 ;;
+    Linux/aarch64|Linux/arm64) api_asset_id=662956401 ;;
+    MINGW*/x86_64|MSYS*/x86_64|CYGWIN*/x86_64) api_asset_id=662956535 ;;
+  esac
+  api_checksums_id=662956296
+
   mkdir -p "$BIN_DIR" || die "无法创建 $BIN_DIR"
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/shjz-gh.XXXXXX") || die "无法创建临时目录"
   url="https://github.com/cli/cli/releases/download/v${GH_VERSION}/${asset}"
   say "未检测到 GitHub CLI，正在下载 ${GH_VERSION} ..."
-  curl -fsSL "$url" -o "$tmp/$asset" || die "下载 gh 失败，请检查网络后重试"
-  curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_checksums.txt" \
-    -o "$tmp/checksums.txt" || die "下载 gh 校验文件失败"
+  if [ -n "$api_asset_id" ] && \
+     curl -fsSL -H "Accept: application/octet-stream" \
+       "https://api.github.com/repos/cli/cli/releases/assets/${api_asset_id}" \
+       -o "$tmp/$asset"; then
+    say "已通过 api.github.com 下载"
+  else
+    say "api.github.com 下载失败，改用 github.com ..."
+    curl -fsSL "$url" -o "$tmp/$asset" || die "下载 gh 失败，请检查网络后重试"
+  fi
+  if ! curl -fsSL -H "Accept: application/octet-stream" \
+       "https://api.github.com/repos/cli/cli/releases/assets/${api_checksums_id}" \
+       -o "$tmp/checksums.txt"; then
+    curl -fsSL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_checksums.txt" \
+      -o "$tmp/checksums.txt" || die "下载 gh 校验文件失败"
+  fi
 
   ( cd "$tmp" && grep " $asset\$" checksums.txt > one.sum && \
     if command -v shasum >/dev/null 2>&1; then shasum -a 256 -c one.sum; else sha256sum -c one.sum; fi ) \

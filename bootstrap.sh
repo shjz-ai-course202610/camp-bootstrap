@@ -4,6 +4,7 @@
 set -u
 
 ORG="shjz-ai-course202610"
+export GH_HOST=github.com
 GH_VERSION="2.103.0"
 BIN_DIR="${CAMP_BIN_DIR:-$HOME/.local/bin}"
 CAMP_HOME="${CAMP_HOME:-$HOME/.shjz}"
@@ -18,7 +19,11 @@ case "${1:-}" in
 esac
 
 say() { printf '%s\n' "$*"; }
-die() { printf '错误：%s\n' "$*" >&2; exit 1; }
+die() {
+  printf '错误：%s\n' "$*" >&2
+  printf '救援：读取同仓库 RESCUE.md，按 doctor 流程排查。\n' >&2
+  exit 1
+}
 
 persist_path() {
   profile=""
@@ -127,15 +132,14 @@ install_gh() {
 ensure_auth() {
   GH_BIN=$(command -v gh 2>/dev/null || true)
   [ -n "$GH_BIN" ] || die "找不到 gh，请重新运行本脚本。"
-  if "$GH_BIN" auth status >/dev/null 2>&1; then
+  if "$GH_BIN" auth status --hostname github.com >/dev/null 2>&1; then
     say "GitHub 已登录：$("$GH_BIN" api user --jq .login 2>/dev/null || echo 未知)"
     return 0
   fi
-  say "尚未登录 GitHub。请在本机终端运行下面这条命令，由你本人完成浏览器登录："
+  say "尚未登录 GitHub。请 AI 读取同仓库 RESCUE.md 的登录授权步骤，由 AI 完成登录；不要让学生输入命令。"
   say ""
-  say "  $GH_BIN auth login --hostname github.com --git-protocol https --scopes repo,read:org"
-  say ""
-  say "登录完成后，重新运行本脚本。不要使用别人的 token。"
+  say "救援：读取同仓库 RESCUE.md，按 doctor 流程排查。"
+  say "不要因为 10-20 秒没反应就判定失败；浏览器授权可能需要更久（最长等 5 分钟）。"
   exit 2
 }
 
@@ -167,16 +171,14 @@ run_init() {
     printf '\n# shjz bootstrap clone\ncamp-bootstrap/\n' >> "$PROJECT_DIR/.gitignore"
   fi
   if [ -z "$REPO_NAME" ]; then
-    printf '请输入私有仓库名（英文/拼音）：'
-    read -r REPO_NAME
+    die "缺少仓名。AI 应使用 <仓名> 调用 bootstrap.sh。"
   fi
-  [ -n "$REPO_NAME" ] || die "仓库名不能为空"
   # CAMP_INIT_ARGS 仅供自动化测试使用（例如 --no-watch）
   bash "$CAMP_HOME/camp.sh" init --name "$REPO_NAME" --yes ${CAMP_INIT_ARGS:-}
 }
 
 main() {
-  command -v git >/dev/null 2>&1 || die "缺少 Git。请先安装 Git 再运行本脚本。"
+  command -v git >/dev/null 2>&1 || die "缺少 Git。请先安装 Git 再运行本脚本；安装与救援步骤见 RESCUE.md。"
   install_gh
   if [ "$INSTALL_ONLY" = "1" ]; then
     gh --version
